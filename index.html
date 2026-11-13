@@ -16,10 +16,10 @@ body{margin:0;color:var(--ink);font:400 17px/1.4 "Iowan Old Style","Palatino Lin
 h1{font:inherit;margin:0;padding:28px 28px 18px}
 /* opening: the heading fades up, one leg reaches in from the edge, taps the "…", the names appear, it pulls away */
 #intro{position:absolute;left:0;top:0;width:100%;pointer-events:none;overflow:visible;z-index:3}
-body.intro #c1 > button{opacity:0}
-body.intro.show #c1 > button{opacity:1;transition:opacity 1.4s ease-in}
-body.intro #hd{opacity:0}
-body.intro #hd.wake{animation:wake 1.1s ease-in .2s both}
+.intro #c1 > button,.intro #theme{opacity:0}
+.intro.show #c1 > button,.intro.show #theme{opacity:1;transition:opacity 1.4s ease-in}
+.intro #hd{opacity:0}
+.intro #hd.wake{animation:wake 1.1s ease-in .2s both}
 @keyframes wake{from{opacity:0}to{opacity:1}}
 #intro g.tap{animation:tap .62s ease-in-out both}
 @keyframes tap{0%,100%{transform:none}22%{transform:rotate(-1.1deg)}40%{transform:none}64%{transform:rotate(-.8deg)}80%{transform:none}}
@@ -62,7 +62,7 @@ button.zz .dn-a{animation:zout 1.1s ease-in-out}
 :focus-visible{outline:1px solid var(--ink);outline-offset:3px}
 @media (max-width:700px){body{font-size:16px}h1{padding:20px 18px 12px}#scroll{padding:0 18px 40vh}#tree{--gap:64px}}
 @media (prefers-reduced-motion:reduce){.col.in button{animation:none;opacity:1}}
-</style><script>try{var t=localStorage.getItem('aw-theme');if(t==='day'||t==='night')document.documentElement.dataset.theme=t}catch(e){}</script></head><body>
+</style><script>try{var t=localStorage.getItem('aw-theme');if(t==='day'||t==='night')document.documentElement.dataset.theme=t}catch(e){}try{if(!matchMedia('(prefers-reduced-motion: reduce)').matches&&location.hash.length<2&&localStorage.getItem('aw-intro')!==new Date().toDateString())document.documentElement.classList.add('intro')}catch(e){}</script></head><body>
 <button id="theme" type="button" aria-label="Switch between white and black" title="White / black"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><path d="M12 3.5a8.5 8.5 0 0 1 0 17z" fill="currentColor"/></svg></button>
 <h1 id="hd">So you’re arguing with…</h1>
 <div class="credit" id="credit">made by <b>Jere</b></div>
@@ -179,15 +179,15 @@ render(); creditCheck();
 
 const NS = 'http://www.w3.org/2000/svg';
 (function intro(){
-  const hd = $('hd'), seen = (() => { try { return localStorage.getItem('aw-intro') === new Date().toDateString(); } catch(e){ return false; } })();
-  if(reduced || seen || S.pi != null) return;
+  const hd = $('hd'), R = document.documentElement;
+  /* the <head> already hid everything if the intro is due, so nothing flashes before it */
+  if(!R.classList.contains('intro') || S.pi != null){ R.classList.remove('intro'); return; }
   try { localStorage.setItem('aw-intro', new Date().toDateString()); } catch(e){}
-  document.body.classList.add('intro');
   const names = btns0(); let done = false; const timers = [];
   const at = (ms, f) => timers.push(setTimeout(f, ms));
   const svgI = document.createElementNS(NS,'svg'); svgI.id = 'intro'; svgI.style.height = document.documentElement.scrollHeight + 'px'; document.body.appendChild(svgI);
   const g = document.createElementNS(NS,'g'); svgI.appendChild(g);
-  const finish = () => { if(done) return; done = true; timers.forEach(clearTimeout); svgI.remove(); document.body.classList.remove('intro','show'); };
+  const finish = () => { if(done) return; done = true; timers.forEach(clearTimeout); svgI.remove(); R.classList.remove('intro','show'); };
   addEventListener('pointerdown', finish, {once:true}); addEventListener('keydown', finish, {once:true});
   hd.classList.add('wake');
   /* something reaches in from the right edge and touches the "…" */
@@ -206,7 +206,7 @@ const NS = 'http://www.w3.org/2000/svg';
     const reach = t * 1000;
     /* two small taps, then it notices you */
     at(reach + 350, () => g.classList.add('tap'));
-    at(reach + 1250, () => document.body.classList.add('show'));
+    at(reach + 1250, () => R.classList.add('show'));
     at(reach + 1650, () => paths.slice().reverse().forEach(([p, L], j) => { p.style.transition = `stroke-dashoffset .16s cubic-bezier(.6,0,1,1) ${j*.05}s`; p.style.strokeDashoffset = L; }));
     at(reach + 2400, finish);
   });
